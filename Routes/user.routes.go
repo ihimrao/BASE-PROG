@@ -10,8 +10,8 @@ import (
 // Routes -> define endpoints
 func Routes() *mux.Router {
 	router := mux.NewRouter()
-	// router.HandleFunc("/person", controller.CreatePersonEndpoint).Methods("POST")
-	router.HandleFunc("/auth", controller.Auths).Methods("GET")
+	router.HandleFunc("/createUser", controller.CreateUserHandler).Methods("POST")
+	router.HandleFunc("/login", controller.Login).Methods("POST")
 	router.HandleFunc("/ping", func(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte("pong!"))
 	}).Methods("GET")
