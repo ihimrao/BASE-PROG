@@ -8,6 +8,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -18,10 +19,10 @@ func main() {
 	color.Cyan("🌏 Server running on localhost:" + os.Getenv("PORT"))
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 	router := route.Routes()
-	// c := cors.New(cors.Options{
-	// 	AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
-	// 	AllowedHeaders: []string{"Content-Type", "Origin", "Accept", "*"},
-	// })
-	// handler := c.Handler(router)
-	http.ListenAndServe(":"+os.Getenv("PORT"), router)
+	c := cors.New(cors.Options{
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders: []string{"Content-Type", "Origin", "Accept", "*"},
+	})
+	handler := c.Handler(router)
+	http.ListenAndServe(":"+os.Getenv("PORT"), handler)
 }
