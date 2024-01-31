@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	database "go-base-fs/db"
 	middlewares "go-base-fs/handlers"
 	user_model "go-base-fs/models"
@@ -12,10 +11,11 @@ import (
 	"net/http"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var client = database.DatabaseConnection()
-var collection = client.Database(middlewares.GetEnvVar("DB_NAME")).Collection("USER")
+var userCollection = client.Database(utils.GetEnvVar("DB_NAME")).Collection("USER")
 
 var Login = http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 	var user user_model.User
@@ -27,14 +27,15 @@ var Login = http.HandlerFunc(func(response http.ResponseWriter, request *http.Re
 	}
 	filter := bson.M{"email": user.Email}
 	var u bson.M
-	collection.FindOne(context.TODO(), filter).Decode(&u)
+	userCollection.FindOne(context.TODO(), filter).Decode(&u)
 	valid := utils.CheckPasswordHash(user.Password, u["password"].(string))
-	fmt.Println("valid: ", u["_id"], valid)
-	validToken, err := middlewares.GenerateJWT()
-	if err != nil {
-		middlewares.ErrorResponse("Error generating token", response)
+	if valid {
+		validToken, err := middlewares.GenerateJWT(u["_id"].(primitive.ObjectID).Hex())
+		if err != nil {
+			json.NewEncoder(response).Encode(utils.ErrorResponse(http.StatusBadRequest, ""))
+		}
+		json.NewEncoder(response).Encode(utils.SuccessResponse(http.StatusOK, "Successfully Logged In", validToken))
 	}
-	middlewares.SuccessResponse(validToken, response)
 })
 
 var CreateUserHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -46,10 +47,10 @@ var CreateUserHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Req
 		return
 	}
 	user.Password = utils.HashPassword(user.Password)
-	result, err := collection.InsertOne(context.Background(), user)
+	result, err := userCollection.InsertOne(context.Background(), user)
 	if err != nil {
 		log.Fatal("Error creating User")
 	}
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(utils.SuccessResponse(http.StatusOK, "User Created Successfully", result))
 })

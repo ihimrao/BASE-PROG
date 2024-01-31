@@ -2,6 +2,7 @@ package route
 
 import (
 	controller "go-base-fs/controllers"
+	middlewares "go-base-fs/handlers"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,10 +15,12 @@ func Routes() *mux.Router {
 	router.HandleFunc("/ping", func(response http.ResponseWriter, request *http.Request) {
 		response.Write([]byte("pong!"))
 	}).Methods("GET")
-	// router.HandleFunc("/person/{id}", controllers.GetPersonEndpoint).Methods("GET")
-	// router.HandleFunc("/person/{id}", controllers.DeletePersonEndpoint).Methods("DELETE")
-	// router.HandleFunc("/person/{id}", controllers.UpdatePersonEndpoint).Methods("PUT")
-	// router.HandleFunc("/upload", controllers.UploadFileEndpoint).Methods("POST")
-	// router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./uploaded/"))))
+
+	// todo's protected route
+	router.HandleFunc("/todo", middlewares.IsAuthorized(controller.AddToDo)).Methods("POST")
+	router.HandleFunc("/todo/{id}", middlewares.IsAuthorized(controller.UpdateToDo)).Methods("POST")
+	router.HandleFunc("/todo", middlewares.IsAuthorized(controller.GetAllTodo)).Methods("GET")
+	router.HandleFunc("/todo/{id}", middlewares.IsAuthorized(controller.DeleteToDo)).Methods("DELETE")
+	router.HandleFunc("/todo/{id}", middlewares.IsAuthorized(controller.GetTodo)).Methods("GET")
 	return router
 }
