@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	model "go-base-fs/models"
 	"go-base-fs/utils"
 	"log"
@@ -96,5 +97,22 @@ var DeleteToDo = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 })
 
 var UpdateToDo = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
+	var updatedTodo model.Todo
+	params := mux.Vars(r)
+	todoID := params["id"]
+	userId := r.Header["uid"][0]
+	userObjId, err := primitive.ObjectIDFromHex(userId)
+	if err != nil {
+		json.NewEncoder(w).Encode(utils.ErrorResponse(http.StatusBadRequest, "Please pass a valid todo id"))
+	}
+	todoObjId, err := primitive.ObjectIDFromHex(todoID)
+	if err != nil {
+		json.NewEncoder(w).Encode(utils.ErrorResponse(http.StatusBadRequest, "Please pass a valid todo id"))
+	}
+	err = json.NewDecoder(r.Body).Decode(&updatedTodo)
+	if err != nil {
+		log.Fatal("Please provide a valid data")
+	}
+	nUpdated, err := todoCollection.UpdateOne(context.Background(), bson.M{"_id": todoObjId, "userId": userObjId}, updatedTodo)
+	fmt.Println("nu=>", nUpdated)
 })

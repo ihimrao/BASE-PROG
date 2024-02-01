@@ -18,7 +18,7 @@ func Routes() *mux.Router {
 
 	// todo's protected route
 	router.HandleFunc("/todo", middlewares.IsAuthorized(controller.AddToDo)).Methods("POST")
-	router.HandleFunc("/todo/{id}", middlewares.IsAuthorized(controller.UpdateToDo)).Methods("POST")
+	router.HandleFunc("/todo/{id}", middlewares.IsAuthorized(controller.UpdateToDo)).Methods("PUT")
 	router.HandleFunc("/todo", middlewares.IsAuthorized(controller.GetAllTodo)).Methods("GET")
 	router.HandleFunc("/todo/{id}", middlewares.IsAuthorized(controller.DeleteToDo)).Methods("DELETE")
 	router.HandleFunc("/todo/{id}", middlewares.IsAuthorized(controller.GetTodo)).Methods("GET")
