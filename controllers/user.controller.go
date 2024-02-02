@@ -12,6 +12,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var client = database.DatabaseConnection()
@@ -20,14 +21,21 @@ var userCollection = client.Database(utils.GetEnvVar("DB_NAME")).Collection("USE
 var Login = http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 	var user user_model.User
 	err := json.NewDecoder(request.Body).Decode(&user)
-
 	if err != nil {
 		response.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	filter := bson.M{"email": user.Email}
 	var u bson.M
-	userCollection.FindOne(context.TODO(), filter).Decode(&u)
+	if err := userCollection.FindOne(context.TODO(), filter).Decode(&u); err != nil {
+		if err == mongo.ErrNoDocuments {
+			response.WriteHeader(http.StatusUnauthorized)
+			return
+		} else {
+			response.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	}
 	valid := utils.CheckPasswordHash(user.Password, u["password"].(string))
 	if valid {
 		validToken, err := middlewares.GenerateJWT(u["_id"].(primitive.ObjectID).Hex())

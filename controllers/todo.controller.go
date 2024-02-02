@@ -3,7 +3,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	model "go-base-fs/models"
 	"go-base-fs/utils"
 	"log"
@@ -113,6 +112,15 @@ var UpdateToDo = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal("Please provide a valid data")
 	}
-	nUpdated, err := todoCollection.UpdateOne(context.Background(), bson.M{"_id": todoObjId, "userId": userObjId}, updatedTodo)
-	fmt.Println("nu=>", nUpdated)
+	update := bson.M{
+		"$set": bson.M{
+			"completed":   updatedTodo.Completed,
+		},
+	}
+	nUpdated, err := todoCollection.UpdateOne(context.Background(), bson.M{"_id": todoObjId, "userId": userObjId}, update)
+	if nUpdated.ModifiedCount > 0 {
+		json.NewEncoder(w).Encode(utils.SuccessResponse(http.StatusOK, "Updated Successfully", bson.M{}))
+	} else {
+		json.NewEncoder(w).Encode(utils.ErrorResponse(http.StatusBadRequest, "Cannot find existing data"))
+	}
 })

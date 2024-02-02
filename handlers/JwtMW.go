@@ -25,16 +25,19 @@ func IsAuthorized(next http.Handler) http.HandlerFunc {
 				return jwtSecret, nil
 			})
 			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized)
 				json.NewEncoder(w).Encode(utils.ErrorResponse(http.StatusUnauthorized, "Token Malformed"))
 			}
 			if token.Valid {
 				claims, ok := token.Claims.(jwt.MapClaims)
 				if !ok {
+					w.WriteHeader(http.StatusUnauthorized)
 					json.NewEncoder(w).Encode(utils.ErrorResponse(http.StatusUnauthorized, "Unable to extract claims"))
 					return
 				}
 				uid, ok := claims["client"].(string)
 				if !ok {
+					w.WriteHeader(http.StatusUnauthorized)
 					json.NewEncoder(w).Encode(utils.ErrorResponse(http.StatusUnauthorized, "UID not found in claims"))
 					return
 				}
@@ -42,6 +45,7 @@ func IsAuthorized(next http.Handler) http.HandlerFunc {
 				next.ServeHTTP(w, r)
 			}
 		} else {
+			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(utils.ErrorResponse(http.StatusUnauthorized, "Unauthorized User"))
 
 		}
